@@ -1,29 +1,14 @@
 import 'package:flutter/material.dart';
 
 class ManorTemperature extends StatelessWidget {
-  double manorTemp;
-  int level;
-  ManorTemperature({Key key, this.manorTemp}) {
-    _calcTempLevel();
-  }
+  const ManorTemperature({
+    super.key,
+    required this.manorTemp,
+  });
 
-  void _calcTempLevel() {
-    if (20 >= manorTemp) {
-      level = 0;
-    } else if (20 < manorTemp && 32 >= manorTemp) {
-      level = 1;
-    } else if (32 < manorTemp && 36.5 >= manorTemp) {
-      level = 2;
-    } else if (36.5 < manorTemp && 40 >= manorTemp) {
-      level = 3;
-    } else if (40 < manorTemp && 50 >= manorTemp) {
-      level = 4;
-    } else if (50 < manorTemp) {
-      level = 5;
-    }
-  }
+  final double manorTemp;
 
-  final List<Color> tempPerColors = [
+  static const List<Color> _tempColors = <Color>[
     Color(0xff072038),
     Color(0xff0d3a65),
     Color(0xff186ec0),
@@ -32,73 +17,86 @@ class ManorTemperature extends StatelessWidget {
     Color(0xfff76707),
   ];
 
-  Widget _makeTempLabelAndBar() {
-    return Container(
-      width: 65,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            "${manorTemp}°C",
-            style: TextStyle(
-              color: tempPerColors[level],
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              height: 6,
-              color: Colors.black.withOpacity(0.2),
-              child: Row(
-                children: [
-                  Container(
-                    height: 6,
-                    width: 65 / 99 * manorTemp,
-                    color: tempPerColors[level],
-                  ),
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _makeTempToCharactorIcon() {
-    return Container(
-      width: 30,
-      height: 30,
-      child: Image.asset("assets/images/level-${level}.jpg"),
-    );
+  int get _level {
+    if (manorTemp <= 20) {
+      return 0;
+    }
+    if (manorTemp <= 32) {
+      return 1;
+    }
+    if (manorTemp <= 36.5) {
+      return 2;
+    }
+    if (manorTemp <= 40) {
+      return 3;
+    }
+    if (manorTemp <= 50) {
+      return 4;
+    }
+    return 5;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              _makeTempLabelAndBar(),
-              SizedBox(width: 7),
-              _makeTempToCharactorIcon(),
-            ],
+    final int level = _level;
+    final Color activeColor = _tempColors[level];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: <Widget>[
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            SizedBox(
+              width: 65,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(
+                    '${manorTemp.toStringAsFixed(1)}C',
+                    style: TextStyle(
+                      color: activeColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      height: 6,
+                      color: Colors.black.withValues(alpha: 0.2),
+                      child: Row(
+                        children: <Widget>[
+                          Container(
+                            height: 6,
+                            width: 65 / 99 * manorTemp,
+                            color: activeColor,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 7),
+            SizedBox(
+              width: 30,
+              height: 30,
+              child: Image.asset('assets/images/level-$level.jpg'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          'Manner Temp',
+          style: TextStyle(
+            decoration: TextDecoration.underline,
+            fontSize: 12,
+            color: Colors.grey,
           ),
-          SizedBox(height: 5),
-          Text(
-            "매너온도",
-            style: TextStyle(
-                decoration: TextDecoration.underline,
-                fontSize: 12,
-                color: Colors.grey),
-          )
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

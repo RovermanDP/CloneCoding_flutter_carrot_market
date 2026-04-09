@@ -2,146 +2,147 @@ import 'package:flutter/material.dart';
 import 'package:flutter_carrot_market/pages/detail.dart';
 import 'package:flutter_carrot_market/repository/contents_repository.dart';
 import 'package:flutter_carrot_market/utils/data_utils.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class MyFavoriteContents extends StatefulWidget {
-  MyFavoriteContents({Key key}) : super(key: key);
+  const MyFavoriteContents({super.key});
 
   @override
-  _MyFavoriteContentsState createState() => _MyFavoriteContentsState();
+  State<MyFavoriteContents> createState() => _MyFavoriteContentsState();
 }
 
 class _MyFavoriteContentsState extends State<MyFavoriteContents> {
   final ContentsRepository contentsRepository = ContentsRepository();
 
-  @override
-  void initState() {
-    super.initState();
+  Future<List<ContentItem>> _loadMyFavoriteContentList() async {
+    return contentsRepository.loadFavoriteContents();
   }
 
-  Future<List<dynamic>> _loadMyFavoriteContentList() async {
-    return await contentsRepository.loadFavoriteContents();
-  }
-
-  Widget _appBarWidget() {
+  PreferredSizeWidget _appBarWidget() {
     return AppBar(
       elevation: 0,
-      title: Text(
-        "관심목록",
+      title: const Text(
+        'Favorites',
         style: TextStyle(fontSize: 15),
       ),
       centerTitle: false,
     );
   }
 
-  Widget _makeDataList(List<dynamic> datas) {
-    int size = datas == null ? 0 : datas.length;
+  Widget _makeDataList(List<ContentItem> datas) {
     return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      itemCount: datas.length,
       itemBuilder: (BuildContext context, int index) {
-        if (datas != null && datas.length > 0) {
-          Map<String, dynamic> data = datas[index];
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 7),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) {
-                  return DetailContentView(data: data);
-                }));
-              },
-              child: Container(
-                  padding: const EdgeInsets.all(10),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                        child: Hero(
-                          tag: data["cid"],
-                          child: Image.asset(
-                            data["image"],
-                            width: 100,
-                            height: 100,
-                            fit: BoxFit.fill,
-                          ),
-                        ),
+        final ContentItem data = datas[index];
+
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 7),
+          child: GestureDetector(
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => DetailContentView(data: data),
+                ),
+              );
+              if (mounted) {
+                setState(() {});
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  ClipRRect(
+                    borderRadius: const BorderRadius.all(Radius.circular(5)),
+                    child: Hero(
+                      tag: data['cid']!,
+                      child: Image.asset(
+                        data['image']!,
+                        width: 100,
+                        height: 100,
+                        fit: BoxFit.fill,
                       ),
-                      Expanded(
-                        child: Container(
-                          height: 100,
-                          padding: const EdgeInsets.only(left: 20, top: 2),
-                          alignment: Alignment.centerLeft,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                data["title"],
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 15),
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                data["location"],
-                                style: TextStyle(
-                                    fontSize: 12, color: Color(0xff999999)),
-                              ),
-                              SizedBox(height: 5),
-                              Text(
-                                DataUtils.calcStringToWon(data["price"]),
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                              Expanded(
-                                child: Container(
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Container(
-                                        height: 18,
-                                        child: SvgPicture.asset(
-                                          "assets/svg/heart_off.svg",
-                                          width: 13,
-                                          height: 13,
-                                        ),
-                                      ),
-                                      SizedBox(width: 3),
-                                      Text(data["likes"]),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      height: 100,
+                      padding: const EdgeInsets.only(left: 20, top: 2),
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            data['title']!,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 15),
                           ),
-                        ),
-                      )
-                    ],
-                  )),
+                          const SizedBox(height: 5),
+                          Text(
+                            data['location']!,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xff999999),
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            DataUtils.calcStringToWon(data['price']!),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: <Widget>[
+                                SvgPicture.asset(
+                                  'assets/svg/heart_on.svg',
+                                  width: 13,
+                                  height: 13,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(data['likes']!),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          );
-        } else {
-          return Center(child: CircularProgressIndicator());
-        }
+          ),
+        );
       },
-      itemCount: size,
     );
   }
 
   Widget _bodyWidget() {
-    return FutureBuilder(
+    return FutureBuilder<List<ContentItem>>(
       future: _loadMyFavoriteContentList(),
-      builder: (context, snapshot) {
+      builder:
+          (BuildContext context, AsyncSnapshot<List<ContentItem>> snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return Center(child: Text("데이터 오류"));
+          return const Center(child: Text('Failed to load favorites.'));
         }
-        if (snapshot.hasData) {
-          return _makeDataList(snapshot.data);
+
+        final List<ContentItem> items = snapshot.data ?? <ContentItem>[];
+        if (items.isEmpty) {
+          return const Center(child: Text('No favorites yet.'));
         }
-        return Center(child: Text("해당 지역에 데이터가 없습니다."));
+
+        return _makeDataList(items);
       },
     );
   }
@@ -151,7 +152,7 @@ class _MyFavoriteContentsState extends State<MyFavoriteContents> {
     return Scaffold(
       appBar: _appBarWidget(),
       body: _bodyWidget(),
-      backgroundColor: Colors.grey.withOpacity(0.05),
+      backgroundColor: Colors.grey.withValues(alpha: 0.05),
     );
   }
 }

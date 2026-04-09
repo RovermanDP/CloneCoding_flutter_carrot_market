@@ -1,0 +1,10 @@
+{
+  "name": "flutter-carrot-market-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal mock backend for the flutter_carrot_market frontend",
+  "scripts": {
+    "start": "node src/server.mjs"
+  }
+}

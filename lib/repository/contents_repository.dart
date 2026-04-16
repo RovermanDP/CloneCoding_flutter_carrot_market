@@ -136,6 +136,23 @@ class ContentsRepository {
         .toList();
   }
 
+  Future<List<ContentItem>> searchContents(
+      String query, String location) async {
+    final Map<String, dynamic> json =
+        await _getJson('/api/listings', <String, String>{
+      'region': location,
+      'query': query,
+    });
+    final List<dynamic> items = json['items'] as List<dynamic>? ?? <dynamic>[];
+
+    return items
+        .map(
+          (dynamic item) => _mapListing(
+              Map<String, dynamic>.from(item as Map<dynamic, dynamic>)),
+        )
+        .toList();
+  }
+
   Future<bool> isMyFavoriteContents(String contentId) async {
     final List<ContentItem> favorites = await loadFavoriteContents();
     return favorites.any((ContentItem item) => item['cid'] == contentId);

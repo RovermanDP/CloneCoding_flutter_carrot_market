@@ -4,117 +4,48 @@ import 'package:flutter_carrot_market/utils/data_utils.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'detail.dart';
-import 'search.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class SearchPage extends StatefulWidget {
+  const SearchPage({super.key, required this.location});
+
+  final String location;
 
   @override
-  State<Home> createState() => _HomeState();
+  State<SearchPage> createState() => _SearchPageState();
 }
 
-class _HomeState extends State<Home> {
+class _SearchPageState extends State<SearchPage> {
   final ContentsRepository contentsRepository = ContentsRepository();
-  String currentLocation = 'ara';
-  List<RegionItem> regions = const <RegionItem>[];
+  final TextEditingController _controller = TextEditingController();
+  String _submittedQuery = '';
 
   @override
-  void initState() {
-    super.initState();
-    _loadRegions();
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
-  Future<void> _loadRegions() async {
-    try {
-      final List<RegionItem> loadedRegions =
-          await contentsRepository.loadRegions();
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        regions = loadedRegions;
-        if (regions.isNotEmpty &&
-            !regions.any((RegionItem item) => item['id'] == currentLocation)) {
-          currentLocation = regions.first['id']!;
-        }
-      });
-    } catch (_) {
-      // Keep the current fallback UI if region loading fails.
-    }
-  }
-
-  String get _currentRegionName {
-    for (final RegionItem region in regions) {
-      if (region['id'] == currentLocation) {
-        return region['name'] ?? currentLocation;
-      }
-    }
-    return currentLocation;
-  }
-
-  PreferredSizeWidget _appbarWidget() {
+  PreferredSizeWidget _appBarWidget() {
     return AppBar(
-      title: PopupMenuButton<String>(
-        offset: const Offset(0, 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(_currentRegionName),
-            const Icon(Icons.arrow_drop_down),
-          ],
+      elevation: 1,
+      title: TextField(
+        controller: _controller,
+        autofocus: true,
+        textInputAction: TextInputAction.search,
+        decoration: const InputDecoration(
+          hintText: 'Search items...',
+          border: InputBorder.none,
         ),
-        onSelected: (String value) {
-          setState(() {
-            currentLocation = value;
-          });
-        },
-        itemBuilder: (BuildContext context) {
-          final List<RegionItem> menuRegions = regions.isEmpty
-              ? <RegionItem>[
-                  <String, String>{'id': 'ara', 'name': 'Ara-dong'},
-                  <String, String>{'id': 'ora', 'name': 'Ora-dong'},
-                ]
-              : regions;
-
-          return menuRegions
-              .map(
-                (RegionItem region) => PopupMenuItem<String>(
-                  value: region['id'],
-                  child: Text(region['name'] ?? ''),
-                ),
-              )
-              .toList();
+        onSubmitted: (String value) {
+          final String trimmed = value.trim();
+          if (trimmed.isNotEmpty) {
+            setState(() {
+              _submittedQuery = trimmed;
+            });
+          }
         },
       ),
-      elevation: 1,
-      actions: <Widget>[
-        IconButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (_) => SearchPage(location: currentLocation),
-              ),
-            );
-          },
-          icon: const Icon(Icons.search),
-        ),
-        IconButton(onPressed: () {}, icon: const Icon(Icons.tune)),
-        IconButton(
-          onPressed: () {},
-          icon: SvgPicture.asset(
-            'assets/svg/bell.svg',
-            width: 22,
-          ),
-        ),
-      ],
     );
-  }
-
-  Future<List<ContentItem>> _loadContents() async {
-    return contentsRepository.loadContentsFromLocation(currentLocation);
   }
 
   Widget _makeDataList(List<ContentItem> datas) {
@@ -220,20 +151,35 @@ class _HomeState extends State<Home> {
   }
 
   Widget _bodyWidget() {
+    if (_submittedQuery.isEmpty) {
+      return const Center(
+        child: Text(
+          'Enter a keyword to search.',
+          style: TextStyle(fontSize: 14, color: Color(0xff999999)),
+        ),
+      );
+    }
+
     return FutureBuilder<List<ContentItem>>(
-      future: _loadContents(),
+      future: contentsRepository.searchContents(
+          _submittedQuery, widget.location),
       builder:
           (BuildContext context, AsyncSnapshot<List<ContentItem>> snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Center(child: CircularProgressIndicator());
         }
         if (snapshot.hasError) {
-          return const Center(child: Text('Failed to load items.'));
+          return const Center(child: Text('Failed to load search results.'));
         }
 
         final List<ContentItem> items = snapshot.data ?? <ContentItem>[];
         if (items.isEmpty) {
-          return const Center(child: Text('No items found for this area.'));
+          return const Center(
+            child: Text(
+              'No results found.',
+              style: TextStyle(fontSize: 14, color: Color(0xff999999)),
+            ),
+          );
         }
 
         return _makeDataList(items);
@@ -244,7 +190,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _appbarWidget(),
+      appBar: _appBarWidget(),
       body: _bodyWidget(),
     );
   }
